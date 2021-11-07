@@ -14,6 +14,10 @@
 #include "lcd.h"
 #include "keypad.h"
 
+#define TMR1H_VAL 0x9E
+#define TMR1L_VAL 0x57
+
+uint16_t centi_seconds = 0;
 uint8_t counter = 0;
 uint16_t interval = 0;
 
@@ -29,15 +33,26 @@ void main(void) {
     
     INTCONbits.GIE = 1;
     INTCONbits.PEIE = 1;
+    PIE1bits.TMR1IE = 1;
     PIE1bits.TMR2IE = 1;
     
-    T2CONbits.TMR2ON = 1;
     
     lcd_init(true, false, false);
-    lcd_write_string("Tiempo arranque");
+    lcd_write_string("Tiempo arranque:");
     lcd_move_cursor(0x47);
     
     keypad_init();
     
     while (1);
+}
+
+void __interrupt() handle_interrupt() {
+    if (PIR1bits.TMR1IF == 1) {
+        T1CONbits.TMR1ON = 0;
+        centi_seconds++;
+        TMR1H = TMR1H_VAL;
+        TMR1L = TMR1L_VAL;
+        PIR1bits.TMR1IF = 0;
+        T1CONbits.TMR1ON = 1;
+    }
 }
