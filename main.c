@@ -21,7 +21,6 @@
 #define TRIGGER PORTCbits.RC3
 #define DUTY_START 410 // Fan turns off below 40% duty cycle.
 #define DUTY_RAMP (1023 - DUTY_START)
-#define DUTY_RES 0.0977
 
 uint16_t time = 0; // Measured in centiseconds (100ms)
 uint16_t time_target = 0;
@@ -42,7 +41,7 @@ unsigned char key;
 uint8_t key_num;
 uint8_t key_count;
 
-char buffer[8];
+char buffer[4];
 
 #define READ_SECONDS(x) x = 0; \
                         while (key_count != 2) { \
@@ -65,6 +64,15 @@ void set_duty_cycle(uint16_t duty) {
     CCPR1L = (uint8_t) (duty >> 2);
     CCP1CON &= 0xCF;
     CCP1CON |= ((duty & 0x03) << 4);
+}
+
+uint8_t duty_to_speed(void) {
+    if (duty <= DUTY_START) {
+        return 0;
+    }
+    else {
+        return (uint8_t) (0.1631 * (duty - DUTY_START));
+    }
 }
 
 void main(void) {
@@ -91,6 +99,7 @@ void main(void) {
     
     while (1) {
         while (status == STATUS_START) {
+            lcd_clear_display();
             lcd_write_string("Tiempo arranque:");
             lcd_move_cursor(0x47);
             READ_SECONDS(start_secs);
@@ -113,7 +122,8 @@ void main(void) {
             lcd_move_cursor(0x03);
             lcd_write_string("Arrancando");
             lcd_move_cursor(0x46);
-            lcd_write_string("0000");
+            lcd_write_string("000%");
+            __delay_ms(100);
             
             // PWM RAMP UP
             rising = true;
@@ -133,7 +143,7 @@ void main(void) {
             lcd_move_cursor(0x03);
             lcd_write_string("Trabajando");
             lcd_move_cursor(0x46);
-            lcd_move_cursor("100%");
+            lcd_write_string("100%");
             for (uint8_t seconds = 0; seconds != work_secs; seconds++) {
                 __delay_ms(1000);
             }
@@ -141,6 +151,8 @@ void main(void) {
             lcd_clear_display();
             lcd_move_cursor(0x04);
             lcd_write_string("Frenando");
+            lcd_move_cursor(0x46);
+            lcd_write_string("100%");
             rising = false;
             time = 0;
             time_target = stop_secs * 10;
@@ -156,7 +168,17 @@ void main(void) {
             lcd_write_string("Final - Apagado");
             lcd_move_cursor(0x40);
             lcd_write_string("* Rst -- # Start");
-            while (1);
+            while (1) {
+                key = key_char(keypad_read());
+                if (key == '*') {
+                    status = STATUS_WORK;
+                    break;
+                }
+                else if (key == '#') {
+                    status = STATUS_START;
+                    break;
+                }
+            }
         }
     }
 }
@@ -167,6 +189,9 @@ void __interrupt() handle_interrupt() {
         time++;
         TMR1H = TMR1H_VAL;
         TMR1L = TMR1L_VAL;
+        if (time != time_target) {
+            T1CONbits.TMR1ON = 1;
+        }
         
         if (rising) {
             duty += duty_step;
@@ -177,11 +202,8 @@ void __interrupt() handle_interrupt() {
         
         set_duty_cycle(duty);
         lcd_move_cursor(0x46);
-        sprintf(buffer, "%04d", duty);
+        sprintf(buffer, "%03d", duty_to_speed());
         lcd_write_string(buffer);
-        if (time != time_target) {
-            T1CONbits.TMR1ON = 1;
-        }
         
         PIR1bits.TMR1IF = 0;
     }
