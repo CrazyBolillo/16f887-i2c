@@ -1,6 +1,7 @@
 #ifndef __KEYPAD_GUARD__
 #define __KEYPAD_GUARD__
 
+#include <stdint.h>
 #include "config.h"
 
 #define COL4 PORTBbits.RB0
@@ -17,5 +18,7 @@
 
 void keypad_init(void);
 char keypad_read(void);
+char key_char(char key);
+uint8_t key_int(char key);
 
 #endif
