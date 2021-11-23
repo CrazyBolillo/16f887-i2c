@@ -18,8 +18,8 @@
 
 #define TMR1H_VAL 0x9E
 #define TMR1L_VAL 0x57
-#define TRIGGER PORTCbits.RC3
-#define DUTY_START 410 // Fan turns off below 40% duty cycle.
+#define TRIGGER PORTCbits.RC1
+#define DUTY_START 306 // Fan turns off below 20% duty cycle.
 #define DUTY_RAMP (1023 - DUTY_START)
 
 uint16_t time = 0; // Measured in centiseconds (100ms)
@@ -42,6 +42,7 @@ uint8_t key_num;
 uint8_t key_count;
 
 char buffer[4];
+
 
 #define READ_SECONDS(x) x = 0; \
                         while (key_count != 2) { \

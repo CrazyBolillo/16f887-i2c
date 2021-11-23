@@ -7,6 +7,8 @@
       <itemPath>keypad.h</itemPath>
       <itemPath>config.h</itemPath>
       <itemPath>lcd.h</itemPath>
+      <itemPath>i2c.h</itemPath>
+      <itemPath>ds1307.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -18,6 +20,7 @@
       <itemPath>keypad.c</itemPath>
       <itemPath>main.c</itemPath>
       <itemPath>lcd.c</itemPath>
+      <itemPath>i2c.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
