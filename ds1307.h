@@ -4,12 +4,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-uint8_t read_seconds(void);
-uint8_t read_minutes(void);
-uint8_t read_hour(void);
+#define SLV_ADDR_WR 0xD0
+#define SLV_ADDR_RD 0xD1
 
-bool write_seconds(uint8_t seconds);
-bool write_minutes(uint8_t minutes);
-bool write_hour(uint8_t hour);
+bool ds1307_rdsec(uint8_t *seconds);
+bool ds1307_rdmin(uint8_t *minutes);
+bool ds1307_rdhour(uint8_t *hours);
+
+bool ds1307_wrsec(uint8_t seconds);
+bool ds1307_wrmin(uint8_t minutes);
+bool ds1307_wrhour(uint8_t hours);
 
 #endif

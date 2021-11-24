@@ -15,6 +15,8 @@
 #include <math.h>
 #include "lcd.h"
 #include "keypad.h"
+#include "i2c.h"
+#include "ds1307.h"
 
 #define TMR1H_VAL 0x9E
 #define TMR1L_VAL 0x57
@@ -32,16 +34,21 @@ uint8_t start_secs;
 uint8_t work_secs;
 uint8_t stop_secs;
 
+#define STATUS_IDLE 'I'
+#define STATUS_HOUR 'H'
 #define STATUS_START 'S'
 #define STATUS_WORK 'W'
 #define STATUS_END 'E'
-unsigned char status = STATUS_START;
+unsigned char status = STATUS_IDLE;
 
 unsigned char key;
 uint8_t key_num;
 uint8_t key_count;
-
 char buffer[4];
+
+uint8_t time_secs;
+uint8_t time_minutes;
+uint8_t time_hours;
 
 
 #define READ_SECONDS(x) x = 0; \
@@ -81,7 +88,7 @@ void main(void) {
     while (OSCCONbits.HTS == 0);
     
     PORTC = 0x00;
-    TRISC = 0x00;
+    TRISC = 0b00011000; //RC4 & RC3 (SDA & SCL) as inputs
     T2CON = 0x03;
     PR2 = 0xFF;
     CCP1CON = 0x0C;
@@ -97,8 +104,20 @@ void main(void) {
     
     lcd_init(true, false, false);
     keypad_init();
-    
-    while (1) {
+    i2c_init();
+
+    while (1) {    
+        while (status == STATUS_IDLE) {
+            lcd_clear_display();
+            if (ds1307_rdsec(&time_secs) == true) {
+                sprintf(buffer, "%02d", time_secs);
+                lcd_write_string(buffer);
+            }
+            else {
+                lcd_write_string("Error");
+            }
+        }
+        
         while (status == STATUS_START) {
             lcd_clear_display();
             lcd_write_string("Tiempo arranque:");
